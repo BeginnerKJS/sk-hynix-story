@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SK 하이닉스토리</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css">
+<style>
+/* ===================== TOKENS & RESPONSIVE ===================== */
+:root{
+  --void:#0a0c13;
+  --panel:#12151f;
+  --panel-2:#1a1f2e;
+  --panel-3:#232a3d;
+  --line:#333c54;
+  --sk-red:#EA002C;
+  --sk-red-dim:#8c1327;
+  --sk-orange:#FF7A1A;
+  --gold:#FFD84D;
+  --cream:#F3EEE1;
+  --dim:#8890a6;
+  --danger:#FF2A46;
+  --ok:#5AD1A6;
+  --font-pixel:'Galmuri11','Galmuri9',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;}
+body{
+  background:var(--void);
+  color:var(--cream);
+  font-family:var(--font-pixel);
+  -webkit-font-smoothing:none;
+  image-rendering:pixelated;
+}
+button{font-family:var(--font-pixel);cursor:pointer;}
+input{font-family:var(--font-pixel);}
+
+/* scanline overlay */
+#scanlines{
+  position:fixed;inset:0;pointer-events:none;z-index:999;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.18) 0px,rgba(0,0,0,0.18) 1px,transparent 2px,transparent 3px);
+  mix-blend-mode:multiply;opacity:.55;
+}
+#scanlines::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.45) 100%);
+}
+
+#app{
+  position:relative;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:0;
+}
+
+.screen{
+  display:none;
+  width:100%;height:100%;
+  max-width:768px;max-height:1024px;
+  position:relative;
+  flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.screen.active{display:flex;}
+
+/* ===================== TITLE ===================== */
+#screen-title{
+  background: url('images/logo2.png') no-repeat center center / cover;
+  padding:20px;
+}
+.title-wrap{
+  width:100%;max-width:460px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+}
+.title-badge{
+  background:var(--sk-red);color:#fff;font-size:clamp(10px, 2.5vw, 12px);letter-spacing:2px;
+  padding:6px 14px;border:2px solid #fff3;
+  box-shadow:3px 3px 0 #000;
+}
+.title-logo-img{
+  width:92%;max-width:380px;height:auto;object-fit:contain;
+  margin:10px 0 16px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.7));
+  animation:logoBounce 2.5s ease-in-out infinite;
+}
+@keyframes logoBounce{
+  0%{transform:translate(0,0) scale(1);}
+  20%{transform:translate(5px,-6px) scale(1.02);}
+  40%{transform:translate(-4px,4px) scale(0.99);}
+  60%{transform:translate(4px,5px) scale(1.01);}
+  80%{transform:translate(-3px,-4px) scale(1.005);}
+  100%{transform:translate(0,0) scale(1);}
+}
+
+.name-input-wrap{
+  width:100%;display:flex;flex-direction:column;gap:10px;align-items:center;
+  background:rgba(18,21,31,0.92);backdrop-filter:blur(6px);border:2px solid var(--line);
+  box-shadow:4px 4px 0 #000;
+  padding:18px 16px;
+}
+.name-input-wrap label{font-size:11px;color:var(--dim);}
+#playerNameInput{
+  width:85%;padding:10px;background:var(--void);color:var(--cream);
+  border:2px solid var(--line);text-align:center;font-size:14px;
+  outline:none;
+}
+#playerNameInput:focus{border-color:var(--sk-orange);}
+.pixel-btn{
+  background:var(--sk-red);color:#fff;border:2px solid #000;
+  box-shadow:3px 3px 0 #000;
+  padding:10px 22px;font-size:13px;letter-spacing:1px;
+  transition:transform .08s ease, background .15s ease;
+}
+.pixel-btn:active{transform:translate(3px,3px);box-shadow:0 0 0 #000;}
+.pixel-btn:hover{background:var(--sk-orange);}
+.pixel-btn.secondary{background:var(--panel-3);}
+.pixel-btn.secondary:hover{background:var(--line);}
+.error-msg{color:var(--danger);font-size:10px;min-height:12px;margin:0;}
+
+/* ===================== TRANSITION ===================== */
+#screen-transition{background:#000;}
+.transition-text{
+  font-size:clamp(20px,6vw,30px);color:var(--gold);
+  text-shadow:3px 3px 0 #000;
+  border-top:2px solid var(--gold);border-bottom:2px solid var(--gold);
+  padding:16px 30px;letter-spacing:3px;
+  opacity:0;animation:transIn 2.6s ease forwards;
+}
+@keyframes transIn{
+  0%{opacity:0;letter-spacing:14px;}
+  20%{opacity:1;letter-spacing:3px;}
+  80%{opacity:1;}
+  100%{opacity:0;}
+}
+
+/* ===================== GAME ===================== */
+#screen-game{padding:0;justify-content:flex-start;}
+.hud{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:10px 12px;background:var(--panel);
+  border-bottom:2px solid var(--line);
+  font-size:11px;
+  z-index:10;
+}
+.hud-left{color:var(--sk-orange);letter-spacing:1px;white-space:nowrap;}
+.supex-gauge{flex:1;display:flex;flex-direction:column;gap:3px;margin-left:14px;}
+.supex-ticks{
+  position:relative;height:12px;background:var(--void);
+  border:2px solid var(--line);overflow:hidden;
+}
+.supex-fill{
+  height:100%;width:0%;
+  background:repeating-linear-gradient(90deg,var(--sk-red) 0 8px,var(--sk-orange) 8px 16px);
+  transition:width .5s ease;
+}
+.supex-caption{color:var(--dim);font-size:10px;display:flex;gap:6px;align-items:center;}
+#scoreNum{color:var(--gold);}
+.bonus-tag{color:#000;background:var(--gold);padding:1px 5px;font-size:9px;}
+.bonus-tag.hidden{display:none;}
+
+.scene{
+  position:relative;width:100%;flex:1;min-height:0;
+  overflow:hidden;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.scene-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  transition:filter .5s ease, opacity .5s ease;
+}
+.scene-img.blurred{
+  filter:blur(5px) brightness(0.7);
+}
+.scene-overlay-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  z-index:2;pointer-events:none;
+}
+.scene-overlay-img.bounce{
+  animation:bounceOverlay 1.2s ease-in-out infinite;
+}
+@keyframes bounceOverlay{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-14px);}
+}
+
+/* Hide speaker box completely */
+.speaker-name{display:none !important;}
+
+.warning-overlay{
+  position:absolute;inset:0;background:var(--danger);opacity:0;pointer-events:none;z-index:5;
+}
+.warning-overlay.active{animation:warnFlash 1.4s steps(2) 0s 2;}
+@keyframes warnFlash{0%,100%{opacity:0;}50%{opacity:.55;}}
+
+.black-overlay{
+  position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:6;
+}
+.black-overlay.blink{animation:blinkAnim 0.7s ease forwards;}
+@keyframes blinkAnim{
+  0%{opacity:0;}
+  30%{opacity:1;}
+  60%{opacity:1;}
+  100%{opacity:0;}
+}
+
+.newsflash-banner{
+  position:absolute;top:0;left:0;right:0;
+  background:var(--sk-red);color:#fff;text-align:center;
+  padding:10px 6px;font-size:12px;letter-spacing:2px;
+  transform:translateY(-100%);z-index:7;
+  border-bottom:3px solid #000;
+}
+.newsflash-banner.active{animation:newsSlide 2s ease forwards;}
+@keyframes newsSlide{
+  0%{transform:translateY(-100%);}
+  15%{transform:translateY(0);}
+  85%{transform:translateY(0);}
+  100%{transform:translateY(-100%);}
+}
+
+.dialogue-box{
+  width:100%;min-height:150px;
+  background:var(--panel);border-top:3px solid var(--sk-red);
+  padding:14px 16px 18px;
+  display:flex;flex-direction:column;gap:8px;
+  position:relative;z-index:10;
+}
+.dialogue-text{
+  margin:0;font-size:clamp(13px,3.6vw,15px);line-height:1.85;
+  color:var(--cream);min-height:56px;white-space:pre-wrap;
+}
+.next-indicator{
+  position:absolute;right:14px;bottom:10px;
+  color:var(--gold);font-size:14px;animation:bounce 1s infinite;
+}
+.next-indicator.hidden{display:none;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(4px);}}
+
+.choices{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.choices.hidden{display:none;}
+.choice-btn{
+  text-align:left;background:var(--panel-2);color:var(--cream);
+  border:2px solid var(--line);padding:10px 12px;font-size:clamp(11px, 3vw, 13px);line-height:1.5;
+  box-shadow:3px 3px 0 #000;transition:.08s ease;
+}
+.choice-btn:hover{background:var(--panel-3);border-color:var(--sk-orange);transform:translate(-1px,-1px);box-shadow:4px 4px 0 #000;}
+.choice-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+.choice-btn:disabled{opacity:.4;pointer-events:none;}
+.choice-letter{color:var(--sk-orange);margin-right:8px;}
+
+/* ===================== ENDING ===================== */
+#screen-ending{padding:20px;position:relative;overflow:hidden;}
+.ending-bg-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:.45;z-index:1;
+}
+.ending-card{
+  position:relative;z-index:2;
+  width:100%;max-width:440px;max-height:90vh;overflow-y:auto;
+  background:rgba(18,21,31,0.94);backdrop-filter:blur(8px);border:3px solid var(--gold);
+  box-shadow:6px 6px 0 #000;
+  padding:26px 20px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.ending-rank{
+  font-size:10px;letter-spacing:3px;color:var(--dim);
+}
+.ending-title{
+  font-size:clamp(20px,6vw,28px);color:var(--gold);
+  text-shadow:3px 3px 0 #000;margin:2px 0;
+}
+.ending-name{font-size:13px;color:var(--sk-orange);}
+.ending-desc{
+  font-size:12.5px;line-height:1.9;color:var(--cream);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:14px 4px;margin:6px 0;
+}
+.ending-score{
+  font-size:15px;color:#fff;background:var(--sk-red);
+  padding:6px 16px;box-shadow:3px 3px 0 #000;
+}
+.ending-btns{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center;}
+
+@media (max-width:480px){
+  .screen{max-width:100vw;max-height:100vh;}
+  .dialogue-box{padding:12px 12px 14px;}
+  .title-logo-img{margin:6px 0 12px;}
+}
+</style>
+</head>
+<body>
+<div id="scanlines"></div>
+
+<!-- Audio Assets -->
+<audio id="openingBgm" src="images/opening.m4a" loop preload="auto"></audio>
+<audio id="runningBgm" src="images/running.mp3" loop preload="auto"></audio>
+
+<div id="app">
+
+  <!-- TITLE SCREEN -->
+  <section id="screen-title" class="screen active">
+    <div class="title-wrap">
+      <div class="title-badge">SK hynix ONBOARDING SIMULATOR</div>
+      <img src="images/logo1.png" alt="SK 하이닉스토리" class="title-logo-img" onerror="this.style.display='none'"/>
+      <div class="name-input-wrap">
+        <label for="playerNameInput">사원증에 새길 이름을 입력하세요</label>
+        <input id="playerNameInput" maxlength="8" placeholder="예) 김하이닉" />
+        <button id="startBtn" class="pixel-btn">입사하기 ▶</button>
+        <p id="nameError" class="error-msg"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRANSITION SCREEN -->
+  <section id="screen-transition" class="screen">
+    <div class="transition-text" id="transitionText">◆ 시간 경과 ◆</div>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="screen-game" class="screen">
+    <div class="hud">
+      <div class="hud-left" id="stageLabel">STAGE 0</div>
+      <div class="supex-gauge">
+        <div class="supex-ticks"><div class="supex-fill" id="supexFill"></div></div>
+        <div class="supex-caption">SUPEX <span id="scoreNum">0</span>/24 <span id="bonusTag" class="bonus-tag hidden">BONUS +1</span></div>
+      </div>
+    </div>
+
+    <div class="scene" id="sceneBg">
+      <img id="sceneBgImg" class="scene-img" alt="" style="display:none;" onerror="this.style.display='none'"/>
+      <img id="sceneOverlayImg" class="scene-overlay-img" alt="" style="display:none;" onerror="this.style.display='none'"/>
+      <div class="newsflash-banner" id="newsflashBanner">🚨 긴급속보 🚨</div>
+      <div class="warning-overlay" id="warningOverlay"></div>
+      <div class="black-overlay" id="blackOverlay"></div>
+    </div>
+
+    <div class="dialogue-box" id="dialogueBox">
+      <p class="dialogue-text" id="dialogueText"></p>
+      <div class="next-indicator hidden" id="nextIndicator">▼ 클릭해서 계속</div>
+      <div class="choices hidden" id="choices"></div>
+    </div>
+  </section>
+
+  <!-- ENDING SCREEN -->
+  <section id="screen-ending" class="screen">
+    <img id="endingBgImg" class="ending-bg-img" alt="" style="display:none;" onerror="this.style.display='none'"/>
+    <div class="ending-card">
+      <div class="ending-rank" id="endingRank">RESULT</div>
+      <div class="ending-title" id="endingTitle">엔딩</div>
+      <div class="ending-name" id="endingName"></div>
+      <div class="ending-score" id="endingScore">0 / 24</div>
+      <p class="ending-desc" id="endingDesc"></p>
+      <div class="ending-btns">
+        <button class="pixel-btn" id="restartBtn">다시 도전하기 ▶</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== BGM & AUDIO CONTROL ===================== */
+var openingAudio = document.getElementById('openingBgm');
+var runningAudio = document.getElementById('runningBgm');
+var currentBgm = null;
+
+function playOpeningBgm(){
+  if(currentBgm === 'opening') return;
+  if(runningAudio){ runningAudio.pause(); runningAudio.currentTime = 0; }
+  if(openingAudio){
+    openingAudio.volume = 0.6;
+    openingAudio.play().then(function(){
+      currentBgm = 'opening';
+    }).catch(function(e){});
+  }
+}
+
+function playRunningBgm(){
+  if(currentBgm === 'running') return;
+  if(openingAudio){ openingAudio.pause(); openingAudio.currentTime = 0; }
+  if(runningAudio){
+    runningAudio.volume = 0.5;
+    runningAudio.play().then(function(){
+      currentBgm = 'running';
+    }).catch(function(e){});
+  }
+}
+
+function stopAllBgm(){
+  if(openingAudio){ openingAudio.pause(); openingAudio.currentTime = 0; }
+  if(runningAudio){ runningAudio.pause(); runningAudio.currentTime = 0; }
+  currentBgm = null;
+}
+
+// User interaction fallback for browser audio autoplay
+function initAudioOnUserAction(){
+  if(screens.title.classList.contains('active') && currentBgm !== 'opening'){
+    playOpeningBgm();
+  }
+}
+document.addEventListener('click', initAudioOnUserAction, {once:false});
+document.addEventListener('keydown', initAudioOnUserAction, {once:false});
+
+/* ===================== DATA ===================== */
+var STAGES = [
+  {
+    tag:'STAGE 0 · 프롤로그',
+    bgImg:'images/stage0.jpeg',
+    bg:'bg-office',
+    lines:[
+      {text:'어느 날, SK 하이닉스의 낡고 지친 만년 사원이었던 나는 퇴근길에 그만 통근버스에 치이고 말았다...\n\n눈을 떠보니 여긴 어디? 나는 누구?\n\n놀랍게도 나는 과거로 회귀하여 FAB 현장에 갓 입사한 파릇파릇한 신입 사원이 되어 있었다!\n\n그래... 지난 생의 설움은 잊어라. 이번 생에선 기필코 사장까지 올라가 최강전설을 찍어주마...!'}
+    ]
+  },
+  {
+    tag:'STAGE 1 · Bar Raising',
+    bgImg:'images/stage1-1.jpeg',
+    bg:'bg-fab',
+    blink:true,
+    lines:[
+      {text:'두근거리는 첫 출근일. {name}은 사원증을 목에 걸고 반도체 팹 클린룸 앞에 섰다.'},
+      {text:'{name} 사원, 우리 부서에 온 것을 환영하네. 앞으로 어떤 각오로 일을 할 건지 말해보게.'}
+    ],
+    choices:[
+      {t:'단순한 유지보수를 넘어, 선배님들의 노하우를 흡수하여 0.1Å 오차 없는 SUPEX를 이루겠습니다!', v:4},
+      {t:'주어진 매뉴얼을 완벽히 숙지하고 맡은 바 임무를 성실히 수행하겠습니다.', v:3},
+      {t:'선배님들이 시키는 거 열심히 하고 밥값은 해내는 사원이 되겠습니다.', v:2},
+      {t:'워라밸이 중요하니 칼퇴를 목표로 다치지 않게 몸이나 사리겠습니다.', v:1}
+    ]
+  },
+  {
+    tag:'STAGE 2 · Innovation',
+    bgImg:'images/stage1.jpeg',
+    overlayImg:'images/stage2.png',
+    blurBg:true,
+    bg:'bg-office',
+    lines:[
+      {text:'몇 달이 지나고, {name}은 어느새 파트 회의실 한 자리를 차지하고 있었다.'},
+      {text:'올해 팀 목표가 원가절감인데, 혹시 좋은 아이디어가 있나?'}
+    ],
+    choices:[
+      {t:'부품 교체 주기를 AI 빅데이터로 분석 최적화하고, 3D 프린팅 자체 조달 프로세스를 구축하겠습니다!', v:4},
+      {t:'사용 중인 소모품 단가를 재조사해 가성비 좋은 타사 부품으로 교체하겠습니다.', v:3},
+      {t:'사무실 종이컵 대신 텀블러를 사용하고 이면지를 활용하겠습니다.', v:2},
+      {t:'원가절감은 구매팀 소관 아닌가요? 메인트는 장비만 잘 고치면 됩니다.', v:1}
+    ],
+    transitionAfter:'◆ 3 년 후 ◆'
+  },
+  {
+    tag:'STAGE 3 · One Team',
+    bgImg:'images/stage3.jpeg',
+    bg:'bg-team',
+    lines:[
+      {text:'3년이 흘러 {name}은 어엿한 실무자가 되었다. 오늘은 중요 프로젝트 킥오프 날, 박재경·김종수·박세준·이예진·박민석이 모두 회의실에 모였다.'},
+      {text:'중요 프로젝트 진행 시 팀원들을 어떻게 이끌 것인가?'}
+    ],
+    choices:[
+      {t:'재경, 세준 님의 노하우와 예진, 민석 님의 새로운 시각을 융합해 강점을 극대화하겠습니다!', v:4},
+      {t:'리더로서 내가 전체 계획을 세우고 업무를 공평하게 할당하겠습니다.', v:3},
+      {t:'각자 맡은 파트만 빵꾸 안 나게 마무리하고 끝난 뒤 회식이나 하자.', v:2},
+      {t:'피곤하니 일 잘하는 종수 후배가 메인으로 뛰고 나는 결제만 하겠다.', v:1}
+    ]
+  },
+  {
+    tag:'STAGE 4 · AI Driven',
+    bgImg:'images/stage4.png',
+    overlayBounce:true,
+    bg:'bg-alert',
+    effect:'warning',
+    lines:[
+      {text:'평온하던 새벽 근무. 갑자기 장비 모니터에 붉은 경고창이 번쩍였다.'},
+      {text:'WARNING 0x40 — 긴급 장비 에러가 발생했다. 어떻게 해결할 것인가?'}
+    ],
+    choices:[
+      {t:'10년 치 로그 데이터를 AI FDC 시스템과 연동해 영구적 해결 로직을 장비에 심는다!', v:4},
+      {t:'두꺼운 매뉴얼에서 에러 코드를 찾아 정석대로 부품을 교체한다.', v:3},
+      {t:'장비 전원을 껐다 켜보고 에러가 사라지길 기도한다.', v:2},
+      {t:'교대 시간 5분 전이니 다음 교대자에게 넘기고 호다닥 퇴근한다.', v:1}
+    ],
+    transitionAfter:'◆ 5 년 후 ◆'
+  },
+  {
+    tag:'STAGE 5 · Customer Focus',
+    bgImg:'images/stage5.jpeg',
+    bg:'bg-global',
+    lines:[
+      {text:'5년의 시간이 흐르고, 전 직원이 대강당에 모였다. 회장님의 스피치가 시작된다.'},
+      {text:'글로벌 고객사와의 대규모 계약이 성사되었습니다. 이것은 우리 모두가 함께 만든 성과입니다.'},
+      {text:'대규모 계약 발표를 접한 당신의 마음가짐은?'}
+    ],
+    choices:[
+      {t:'고객사의 미래 요구를 선제 파악하고 수율을 끌어올려 페인포인트를 완벽히 해소한다!', v:4},
+      {t:'물량이 쏟아질 테니 불량이 나지 않도록 성실히 장비를 점검한다.', v:3},
+      {t:'주식 앱을 켜서 회사 주식을 풀매수하고 성과급을 기대한다.', v:2},
+      {t:'납기일 맞추려면 메인트만 갈려 나가겠네. 눈치껏 쉬면서 일하자.', v:1}
+    ],
+    transitionAfter:'◆ 3 년 후 ◆'
+  },
+  {
+    tag:'STAGE 6 · Perfection',
+    bgImg:'images/stage6.jpeg',
+    bg:'bg-crisis',
+    effect:'newsflash',
+    lines:[
+      {text:'평범한 오후, 사내 모니터에 긴급속보가 떴다.'},
+      {text:'[속보] 희토류 광물, 전격 수출 금지령 발효.'},
+      {text:'자원 위기로 회사가 절체절명의 위기에 빠졌다. 당신의 행동은?'}
+    ],
+    choices:[
+      {t:'타협 없이 설비 한계를 돌파하여 단 1개의 자원 낭비도 없는 Perfection 공정을 완성한다.', v:4},
+      {t:'비상 경영 체제에 동참하여 소모품을 줄이고 잔업을 하며 버틴다.', v:3},
+      {t:'높으신 임원들이 알아서 할 테니 월급루팡 모드로 지낸다.', v:2},
+      {t:'배 가라앉기 전에 탈출하자. 사표 쓰고 치킨집이나 차린다.', v:1}
+    ]
+  }
+];
+
+var SPECIAL_1 = {
+  tag:'SPECIAL · 인등산',
+  bgImg:'images/stage7.png',
+  bg:'bg-mountain',
+  lines:[
+    {text:'회사 워크숍으로 떠난 인등산 등반. 정상을 향해 오르던 {name}, 발끝에 뭔가 걸려 휘청였다.'}
+  ],
+  choices:[
+    {t:'뭐에 걸렸는지 확인한다', next:'special2'},
+    {t:'화를 내며 걷어찬다', next:'ending3'}
+  ]
+};
+
+var SPECIAL_2 = {
+  tag:'SPECIAL · 미지의 발견',
+  bgImg:'images/special2.png',
+  bg:'bg-cave',
+  lines:[
+    {text:'다시 살펴보니, 흙 속에서 낯선 광물이 은은하게 빛나고 있었다.'},
+    {text:'전문가 감정 결과 — 차세대 반도체 신소재 비브라늄으로 밝혀졌다! 회사 전체가 이 발견으로 술렁였다.'},
+    {text:'보너스 점수 +1 획득!'}
+  ]
+};
+
+var ENDINGS = {
+  ending1:{
+    min:1,max:10,rank:'RANK D',
+    title:'우울한 만년 사원',
+    bgImg:'images/ending1.png',
+    bg:'bg-end-sad',
+    desc:'{name}은 오늘도 조용히 사원증을 찍는다. 승진도, 열정도 희미해진 지 오래. 그래도 정시 퇴근만큼은 완벽하게 지켜내는 나날이 계속된다.'
+  },
+  ending2:{
+    min:11,max:20,rank:'RANK C',
+    title:'평범한 구성원',
+    bgImg:'images/ending2.png',
+    bg:'bg-end-normal',
+    desc:'{name}은 무난하게 제 몫을 해내는 성실한 구성원으로 자리 잡았다. 큰 사고도 큰 영광도 없이, 회사와 함께 묵묵히 굴러가는 하루하루다.'
+  },
+  ending3:{
+    min:21,max:24,rank:'RANK A',
+    title:'핵심 임원',
+    bgImg:'images/ending3.png',
+    bg:'bg-end-gold',
+    desc:'패기로 똘똘 뭉친 {name}은 마침내 임원 자리에 올랐다. 회사의 핵심 축이 된 지금, 다음 목표는 SUPEX 그 이상이다.'
+  },
+  ending4:{
+    min:25,max:25,rank:'RANK S · LEGEND',
+    title:'SK하이닉스 사장',
+    bgImg:'images/ending4.png',
+    bg:'bg-end-legend',
+    desc:'구성원 행복과 SUPEX를 향한 끝없는 VWBE로, {name}은 마침내 SK하이닉스의 사장 자리에 올랐다. 그날 저녁, AI 반도체 기업의 전설적인 창업자 젠슨 황과 깐부치킨에서 치맥을 나누며 다음 협업을 논의했다는 훈훈한 소문이 전 직원 사이에 퍼졌다.'
+  }
+};
+
+/* ===================== STATE ===================== */
+var state = {
+  playerName:'',
+  score:0,
+  bonus:false,
+  stageIndex:0,
+  lineIndex:0,
+  currentStage:null,
+  typing:false,
+  typeTimer:null,
+  audioCtx:null,
+  inEndingDialogue:false,
+  currentEndingKey:null
+};
+
+/* ===================== DOM ===================== */
+var $ = function(id){ return document.getElementById(id); };
+var screens = {
+  title:$('screen-title'),
+  transition:$('screen-transition'),
+  game:$('screen-game'),
+  ending:$('screen-ending')
+};
+
+function showScreen(name){
+  Object.keys(screens).forEach(function(k){
+    screens[k].classList.toggle('active', k===name);
+  });
+  if(name === 'title'){
+    playOpeningBgm();
+  }else{
+    playRunningBgm();
+  }
+}
+
+function withName(str){
+  return str.split('{name}').join(state.playerName);
+}
+
+/* ===================== AUDIO (WebAudio) ===================== */
+function ensureAudio(){
+  if(!state.audioCtx){
+    try{
+      var AC = window.AudioContext || window.webkitAudioContext;
+      state.audioCtx = new AC();
+    }catch(e){ state.audioCtx = null; }
+  }
+  if(state.audioCtx && state.audioCtx.state === 'suspended'){
+    state.audioCtx.resume();
+  }
+}
+function beep(freq, dur, type, delay, vol){
+  if(!state.audioCtx) return;
+  var ctx = state.audioCtx;
+  var t0 = ctx.currentTime + (delay||0);
+  var osc = ctx.createOscillator();
+  var gain = ctx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol||0.06, t0+0.02);
+  gain.gain.linearRampToValueAtTime(0, t0+(dur||0.15));
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0+(dur||0.15)+0.02);
+}
+function playClick(){ beep(520,0.06,'square',0,0.04); }
+function playConfirm(){ beep(680,0.09,'square',0,0.05); beep(880,0.11,'square',0.08,0.05); }
+function playSiren(){
+  for(var i=0;i<6;i++){
+    beep(i%2===0?720:480, 0.18, 'sawtooth', i*0.19, 0.05);
+  }
+}
+function playNews(){
+  beep(300,0.08,'square',0,0.05);
+  beep(300,0.08,'square',0.14,0.05);
+  beep(300,0.16,'square',0.28,0.05);
+}
+function playTransitionChime(){
+  beep(440,0.16,'sine',0,0.05);
+  beep(660,0.2,'sine',0.16,0.05);
+}
+function playEndingFanfare(tier){
+  if(tier===1){
+    beep(330,0.3,'triangle',0,0.05); beep(220,0.4,'triangle',0.28,0.05);
+  }else if(tier===2){
+    beep(440,0.2,'square',0,0.05); beep(440,0.2,'square',0.2,0.05);
+  }else if(tier===3){
+    beep(523,0.15,'square',0,0.05); beep(659,0.15,'square',0.15,0.05); beep(784,0.25,'square',0.3,0.05);
+  }else{
+    beep(523,0.13,'square',0,0.06); beep(659,0.13,'square',0.13,0.06);
+    beep(784,0.13,'square',0.26,0.06); beep(1046,0.35,'square',0.39,0.06);
+  }
+}
+
+/* ===================== GAUGE ===================== */
+function updateGauge(){
+  var pct = Math.min(100, (state.score/24)*100);
+  $('supexFill').style.width = pct+'%';
+  $('scoreNum').textContent = state.score;
+  $('bonusTag').classList.toggle('hidden', !state.bonus);
+}
+
+/* ===================== SCENE / DIALOGUE ===================== */
+function setBackground(stage){
+  var scene = $('sceneBg');
+  scene.className = 'scene ' + (stage.bg || '');
+
+  var bgImg = $('sceneBgImg');
+  var overlayImg = $('sceneOverlayImg');
+
+  if(stage.blink){
+    var bo = $('blackOverlay');
+    bo.classList.remove('blink');
+    void bo.offsetWidth;
+    bo.classList.add('blink');
+  }
+
+  if(stage.bgImg){
+    bgImg.src = stage.bgImg;
+    bgImg.style.display = 'block';
+  }else{
+    bgImg.style.display = 'none';
+  }
+
+  if(stage.blurBg){
+    bgImg.classList.add('blurred');
+  }else{
+    bgImg.classList.remove('blurred');
+  }
+
+  if(stage.overlayImg){
+    overlayImg.src = stage.overlayImg;
+    overlayImg.style.display = 'block';
+    if(stage.overlayBounce){
+      overlayImg.classList.add('bounce');
+    }else{
+      overlayImg.classList.remove('bounce');
+    }
+  }else{
+    overlayImg.style.display = 'none';
+    overlayImg.classList.remove('bounce');
+  }
+}
+
+function triggerEffect(effect){
+  if(effect==='warning'){
+    var ov = $('warningOverlay');
+    ov.classList.remove('active'); void ov.offsetWidth; ov.classList.add('active');
+    playSiren();
+  }else if(effect==='newsflash'){
+    var nb = $('newsflashBanner');
+    nb.classList.remove('active'); void nb.offsetWidth; nb.classList.add('active');
+    playNews();
+  }
+}
+
+function loadStage(stage, tagOverride){
+  state.inEndingDialogue = false;
+  state.currentStage = stage;
+  state.lineIndex = 0;
+  $('stageLabel').textContent = tagOverride || stage.tag;
+  setBackground(stage);
+  $('choices').classList.add('hidden');
+  $('choices').innerHTML = '';
+  if(stage.effect){
+    setTimeout(function(){ triggerEffect(stage.effect); }, 150);
+  }
+  playLine();
+}
+
+function playLine(){
+  var stage = state.currentStage;
+  if(state.lineIndex >= stage.lines.length){
+    afterLines(stage);
+    return;
+  }
+  var line = stage.lines[state.lineIndex];
+  $('nextIndicator').classList.add('hidden');
+  typeText($('dialogueText'), withName(line.text));
+}
+
+function typeText(el, text){
+  clearInterval(state.typeTimer);
+  el.textContent = '';
+  var i = 0;
+  state.typing = true;
+  state.typeTimer = setInterval(function(){
+    if(i < text.length){
+      el.textContent += text.charAt(i);
+      i++;
+    }else{
+      clearInterval(state.typeTimer);
+      state.typing = false;
+      onLineDone();
+    }
+  }, 26);
+}
+
+function skipTyping(){
+  if(state.inEndingDialogue){
+    clearInterval(state.typeTimer);
+    var e = ENDINGS[state.currentEndingKey];
+    $('dialogueText').textContent = withName(e.desc);
+    state.typing = false;
+    onEndingLineDone();
+    return;
+  }
+  var stage = state.currentStage;
+  var line = stage.lines[state.lineIndex];
+  clearInterval(state.typeTimer);
+  $('dialogueText').textContent = withName(line.text);
+  state.typing = false;
+  onLineDone();
+}
+
+function onLineDone(){
+  if(state.inEndingDialogue){
+    onEndingLineDone();
+    return;
+  }
+  var stage = state.currentStage;
+  var isLast = state.lineIndex >= stage.lines.length - 1;
+  if(isLast){
+    if(stage.choices){
+      renderChoices(stage.choices);
+    }else{
+      renderContinueButton();
+    }
+  }else{
+    $('nextIndicator').classList.remove('hidden');
+  }
+}
+
+function onEndingLineDone(){
+  var box = $('choices');
+  box.innerHTML = '';
+  box.classList.remove('hidden');
+  var btn = document.createElement('button');
+  btn.className = 'choice-btn';
+  btn.textContent = '▶ 결과 카드 보기';
+  btn.onclick = function(){
+    playClick();
+    showFinalEndingCard(state.currentEndingKey);
+  };
+  box.appendChild(btn);
+}
+
+function renderContinueButton(){
+  var box = $('choices');
+  box.innerHTML = '';
+  box.classList.remove('hidden');
+  var btn = document.createElement('button');
+  btn.className = 'choice-btn';
+  btn.textContent = '▶ 다음';
+  btn.onclick = function(){ playClick(); onContinueAfterStage(); };
+  box.appendChild(btn);
+}
+
+function renderChoices(choices){
+  var box = $('choices');
+  box.innerHTML = '';
+  var letters = ['A','B','C','D'];
+  choices.forEach(function(c, idx){
+    var btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = '<span class="choice-letter">'+letters[idx]+'.</span>'+withName(c.t);
+    btn.onclick = function(){ selectChoice(c, box); };
+    box.appendChild(btn);
+  });
+  box.classList.remove('hidden');
+}
+
+/* dialogue box click = advance / skip */
+$('dialogueBox').addEventListener('click', function(e){
+  if(e.target.closest('.choice-btn')) return;
+  if(state.typing){
+    skipTyping();
+    return;
+  }
+  if(state.inEndingDialogue) return;
+  var stage = state.currentStage;
+  var isLast = state.lineIndex >= stage.lines.length - 1;
+  if(!isLast){
+    state.lineIndex++;
+    playLine();
+  }
+});
+
+/* ===================== FLOW CONTROL ===================== */
+function selectChoice(choice, box){
+  Array.prototype.forEach.call(box.querySelectorAll('.choice-btn'), function(b){ b.disabled = true; });
+  playConfirm();
+  if(typeof choice.v === 'number'){
+    state.score += choice.v;
+    updateGauge();
+  }
+  setTimeout(function(){
+    if(choice.next){
+      routeByKey(choice.next);
+    }else{
+      onContinueAfterStage();
+    }
+  }, 450);
+}
+
+function onContinueAfterStage(){
+  var stage = state.currentStage;
+  if(stage === SPECIAL_2){
+    state.bonus = true;
+    state.score += 1;
+    updateGauge();
+    goEnding('ending4');
+    return;
+  }
+  if(stage.transitionAfter){
+    runTransition(stage.transitionAfter, advanceMainStage);
+  }else{
+    advanceMainStage();
+  }
+}
+
+function advanceMainStage(){
+  state.stageIndex++;
+  if(state.stageIndex < STAGES.length){
+    loadStage(STAGES[state.stageIndex]);
+  }else{
+    resolveMainEnding();
+  }
+}
+
+function runTransition(text, cb){
+  showScreen('transition');
+  var el = $('transitionText');
+  el.textContent = text;
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.animation = '';
+  playTransitionChime();
+  setTimeout(function(){
+    showScreen('game');
+    cb();
+  }, 2200);
+}
+
+function resolveMainEnding(){
+  var s = state.score;
+  if(s >= 21 && s <= 24){
+    loadStage(SPECIAL_1, SPECIAL_1.tag);
+  }else if(s >= 11){
+    goEnding('ending2');
+  }else{
+    goEnding('ending1');
+  }
+}
+
+function routeByKey(key){
+  if(key === 'special2'){
+    loadStage(SPECIAL_2, SPECIAL_2.tag);
+  }else if(key === 'ending3'){
+    goEnding('ending3');
+  }else if(key === 'ending4'){
+    goEnding('ending4');
+  }
+}
+
+/* ===================== ENDING FLOW ===================== */
+/* Step 1: Display Ending scene image and desc text on game screen first */
+function goEnding(key){
+  state.inEndingDialogue = true;
+  state.currentEndingKey = key;
+  var e = ENDINGS[key];
+  showScreen('game');
+  $('stageLabel').textContent = 'ENDING · ' + e.title;
+  setBackground({ bgImg: e.bgImg, bg: e.bg });
+  $('choices').classList.add('hidden');
+  $('choices').innerHTML = '';
+  $('nextIndicator').classList.add('hidden');
+  typeText($('dialogueText'), withName(e.desc));
+}
+
+/* Step 2: Display Final Ending Card modal when user clicks next in dialogue box */
+function showFinalEndingCard(key){
+  var e = ENDINGS[key];
+  var tier = key==='ending1'?1:key==='ending2'?2:key==='ending3'?3:4;
+  showScreen('ending');
+  
+  var endingBgImg = $('endingBgImg');
+  if(e.bgImg){
+    endingBgImg.src = e.bgImg;
+    endingBgImg.style.display = 'block';
+  }else{
+    endingBgImg.style.display = 'none';
+  }
+
+  document.querySelector('.ending-card').className = 'ending-card';
+  $('endingRank').textContent = e.rank;
+  $('endingTitle').textContent = e.title;
+  $('endingName').textContent = '사원증 명의: ' + state.playerName;
+  var maxShow = state.bonus ? 25 : 24;
+  $('endingScore').textContent = state.score + ' / ' + maxShow + '  (SUPEX 지수)';
+  $('endingDesc').textContent = withName(e.desc);
+  screens.ending.className = 'screen active ' + e.bg;
+  playEndingFanfare(tier);
+}
+
+/* ===================== INIT / RESTART ===================== */
+function startGame(){
+  var raw = $('playerNameInput').value.trim();
+  if(!raw){
+    $('nameError').textContent = '이름을 입력해야 사원증이 발급됩니다!';
+    return;
+  }
+  if(raw.length > 8){
+    $('nameError').textContent = '이름은 8자 이내로 입력해 주세요.';
+    return;
+  }
+  $('nameError').textContent = '';
+  state.playerName = raw;
+  state.score = 0;
+  state.bonus = false;
+  state.stageIndex = 0;
+  state.inEndingDialogue = false;
+  ensureAudio();
+  updateGauge();
+  showScreen('game');
+  loadStage(STAGES[0]);
+}
+
+function restartGame(){
+  showScreen('title');
+  $('warningOverlay').classList.remove('active');
+  $('newsflashBanner').classList.remove('active');
+}
+
+$('startBtn').addEventListener('click', function(){ playClick(); startGame(); });
+$('playerNameInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ playClick(); startGame(); }
+});
+$('restartBtn').addEventListener('click', function(){ playClick(); restartGame(); });
+
+updateGauge();
+showScreen('title');
+})();
+</script>
+</body>
+</html>
