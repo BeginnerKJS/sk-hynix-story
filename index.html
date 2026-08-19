@@ -21,6 +21,7 @@
   --dim:#8890a6;
   --danger:#FF2A46;
   --ok:#5AD1A6;
+  --info:#5ea2ff;
   --font-pixel:'Galmuri11','Galmuri9',monospace;
 }
 *{box-sizing:border-box;}
@@ -51,6 +52,19 @@ input{font-family:var(--font-pixel);}
   display:flex;align-items:center;justify-content:center;
   padding:0;
 }
+
+/* Global Sound Toggle Button */
+.global-sound-btn{
+  position:fixed;top:12px;right:14px;z-index:1000;
+  background:rgba(18,21,31,0.88);color:var(--gold);border:2px solid var(--line);
+  padding:6px 10px;font-size:13px;box-shadow:3px 3px 0 #000;
+  backdrop-filter:blur(4px);
+  cursor:pointer;
+  transition:transform .08s ease, background .15s ease, border-color .15s ease;
+}
+.global-sound-btn:hover{border-color:var(--sk-orange);transform:translate(-1px,-1px);box-shadow:4px 4px 0 #000;}
+.global-sound-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
+.global-sound-btn.muted{opacity:0.6;filter:grayscale(0.8);color:var(--dim);}
 
 .screen{
   display:none;
@@ -142,7 +156,7 @@ input{font-family:var(--font-pixel);}
   z-index:10;
 }
 .hud-left{color:var(--sk-orange);letter-spacing:1px;white-space:nowrap;}
-.supex-gauge{flex:1;display:flex;flex-direction:column;gap:3px;margin-left:14px;}
+.supex-gauge{flex:1;display:flex;flex-direction:column;gap:3px;margin:0 14px;}
 .supex-ticks{
   position:relative;height:12px;background:var(--void);
   border:2px solid var(--line);overflow:hidden;
@@ -153,8 +167,8 @@ input{font-family:var(--font-pixel);}
   transition:width .5s ease;
 }
 .supex-caption{color:var(--dim);font-size:10px;display:flex;gap:6px;align-items:center;}
-#scoreNum{color:var(--gold);}
-.bonus-tag{color:#000;background:var(--gold);padding:1px 5px;font-size:9px;}
+#scoreNum{color:var(--gold);font-weight:bold;}
+.bonus-tag{color:#000;background:var(--gold);padding:1px 5px;font-size:9px;font-weight:bold;}
 .bonus-tag.hidden{display:none;}
 
 .scene{
@@ -222,6 +236,7 @@ input{font-family:var(--font-pixel);}
   padding:14px 16px 18px;
   display:flex;flex-direction:column;gap:8px;
   position:relative;z-index:10;
+  cursor:pointer;
 }
 .dialogue-text{
   margin:0;font-size:clamp(13px,3.6vw,15px);line-height:1.85;
@@ -229,7 +244,8 @@ input{font-family:var(--font-pixel);}
 }
 .next-indicator{
   position:absolute;right:14px;bottom:10px;
-  color:var(--gold);font-size:14px;animation:bounce 1s infinite;
+  color:var(--gold);font-size:13px;animation:bounce 1s infinite;
+  user-select:none;
 }
 .next-indicator.hidden{display:none;}
 @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(4px);}}
@@ -237,14 +253,46 @@ input{font-family:var(--font-pixel);}
 .choices{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
 .choices.hidden{display:none;}
 .choice-btn{
+  position:relative;
   text-align:left;background:var(--panel-2);color:var(--cream);
   border:2px solid var(--line);padding:10px 12px;font-size:clamp(11px, 3vw, 13px);line-height:1.5;
-  box-shadow:3px 3px 0 #000;transition:.08s ease;
+  box-shadow:3px 3px 0 #000;
+  transition:transform .08s ease, background .15s ease, border-color .15s ease;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;
+  cursor:pointer;
 }
 .choice-btn:hover{background:var(--panel-3);border-color:var(--sk-orange);transform:translate(-1px,-1px);box-shadow:4px 4px 0 #000;}
 .choice-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000;}
-.choice-btn:disabled{opacity:.4;pointer-events:none;}
-.choice-letter{color:var(--sk-orange);margin-right:8px;}
+.choice-btn:disabled{opacity:.6;cursor:default;}
+.choice-letter{color:var(--sk-orange);margin-right:8px;font-weight:bold;}
+
+/* Educational Choice Feedback Highlights */
+.choice-btn.selected-correct{
+  background:#143d2b !important;border-color:var(--ok) !important;color:#fff !important;
+  box-shadow:0 0 12px rgba(90,209,166,0.6), 3px 3px 0 #000 !important;
+}
+.choice-btn.selected-good{
+  background:#172e4d !important;border-color:var(--info) !important;color:#fff !important;
+  box-shadow:0 0 10px rgba(94,162,255,0.5), 3px 3px 0 #000 !important;
+}
+.choice-btn.selected-normal{
+  background:#3b2d14 !important;border-color:var(--sk-orange) !important;color:#fff !important;
+  box-shadow:0 0 10px rgba(255,122,26,0.5), 3px 3px 0 #000 !important;
+}
+.choice-btn.selected-bad{
+  background:#3b1419 !important;border-color:var(--danger) !important;color:#fff !important;
+  box-shadow:0 0 10px rgba(255,42,70,0.5), 3px 3px 0 #000 !important;
+}
+.choice-badge{
+  font-size:10px;padding:2px 6px;border-radius:2px;font-weight:bold;
+  background:rgba(0,0,0,0.6);border:1px solid currentColor;
+  animation:popBadge 0.25s ease forwards;
+  white-space:nowrap;
+}
+@keyframes popBadge{
+  0%{transform:scale(0.8);opacity:0;}
+  100%{transform:scale(1);opacity:1;}
+}
 
 /* ===================== ENDING ===================== */
 #screen-ending{padding:20px;position:relative;overflow:hidden;}
@@ -283,11 +331,15 @@ input{font-family:var(--font-pixel);}
   .screen{max-width:100vw;max-height:100vh;}
   .dialogue-box{padding:12px 12px 14px;}
   .title-logo-img{margin:6px 0 12px;}
+  .global-sound-btn{top:8px;right:8px;padding:4px 8px;font-size:11px;}
 }
 </style>
 </head>
 <body>
 <div id="scanlines"></div>
+
+<!-- Global Audio Control Button -->
+<button id="soundToggleBtn" class="global-sound-btn" title="사운드 켜기/끄기 (단축키: M)">🔊</button>
 
 <!-- Audio Assets -->
 <audio id="openingBgm" src="images/opening.m4a" loop preload="auto"></audio>
@@ -320,7 +372,7 @@ input{font-family:var(--font-pixel);}
       <div class="hud-left" id="stageLabel">STAGE 0</div>
       <div class="supex-gauge">
         <div class="supex-ticks"><div class="supex-fill" id="supexFill"></div></div>
-        <div class="supex-caption">SUPEX <span id="scoreNum">0</span>/24 <span id="bonusTag" class="bonus-tag hidden">BONUS +1</span></div>
+        <div class="supex-caption">CoC 실천도 <span id="scoreNum">0</span>/24 <span id="bonusTag" class="bonus-tag hidden">BONUS +1</span></div>
       </div>
     </div>
 
@@ -334,7 +386,7 @@ input{font-family:var(--font-pixel);}
 
     <div class="dialogue-box" id="dialogueBox">
       <p class="dialogue-text" id="dialogueText"></p>
-      <div class="next-indicator hidden" id="nextIndicator">▼ 클릭해서 계속</div>
+      <div class="next-indicator hidden" id="nextIndicator">▼ 클릭 또는 Space/Enter로 계속</div>
       <div class="choices hidden" id="choices"></div>
     </div>
   </section>
@@ -360,47 +412,14 @@ input{font-family:var(--font-pixel);}
 (function(){
 "use strict";
 
-/* ===================== BGM & AUDIO CONTROL ===================== */
-var openingAudio = document.getElementById('openingBgm');
-var runningAudio = document.getElementById('runningBgm');
+/* ===================== DOM HELPER ===================== */
+function $(id){ return document.getElementById(id); }
+
+/* ===================== AUDIO & STATE ===================== */
+var openingAudio = $('openingBgm');
+var runningAudio = $('runningBgm');
 var currentBgm = null;
-
-function playOpeningBgm(){
-  if(currentBgm === 'opening') return;
-  if(runningAudio){ runningAudio.pause(); runningAudio.currentTime = 0; }
-  if(openingAudio){
-    openingAudio.volume = 0.6;
-    openingAudio.play().then(function(){
-      currentBgm = 'opening';
-    }).catch(function(e){});
-  }
-}
-
-function playRunningBgm(){
-  if(currentBgm === 'running') return;
-  if(openingAudio){ openingAudio.pause(); openingAudio.currentTime = 0; }
-  if(runningAudio){
-    runningAudio.volume = 0.5;
-    runningAudio.play().then(function(){
-      currentBgm = 'running';
-    }).catch(function(e){});
-  }
-}
-
-function stopAllBgm(){
-  if(openingAudio){ openingAudio.pause(); openingAudio.currentTime = 0; }
-  if(runningAudio){ runningAudio.pause(); runningAudio.currentTime = 0; }
-  currentBgm = null;
-}
-
-// User interaction fallback for browser audio autoplay
-function initAudioOnUserAction(){
-  if(screens.title.classList.contains('active') && currentBgm !== 'opening'){
-    playOpeningBgm();
-  }
-}
-document.addEventListener('click', initAudioOnUserAction, {once:false});
-document.addEventListener('keydown', initAudioOnUserAction, {once:false});
+var isMuted = false;
 
 /* ===================== DATA ===================== */
 var STAGES = [
@@ -463,7 +482,8 @@ var STAGES = [
   },
   {
     tag:'STAGE 4 · AI Driven',
-    bgImg:'images/stage4.png',
+    bgImg:'images/stage1.jpeg',
+    overlayImg:'images/stage4.png',
     overlayBounce:true,
     bg:'bg-alert',
     effect:'warning',
@@ -484,9 +504,9 @@ var STAGES = [
     bgImg:'images/stage5.jpeg',
     bg:'bg-global',
     lines:[
-      {text:'5년의 시간이 흐르고, 전 직원이 대강당에 모였다. 회장님의 스피치가 시작된다.'},
-      {text:'글로벌 고객사와의 대규모 계약이 성사되었습니다. 이것은 우리 모두가 함께 만든 성과입니다.'},
-      {text:'대규모 계약 발표를 접한 당신의 마음가짐은?'}
+      {text:'5년의 시간이 흘러, {name}은 글로벌 빅테크 고객사와의 차세대 AI 메모리 공급 협약식에 참석했다.'},
+      {text:'양사 대표가 굳은 악수를 나누며 역사적인 대규모 전략 계약 체결식이 거행되었다!'},
+      {text:'글로벌 고객사와의 대규모 파트너십을 눈앞에서 마주한 {name}의 마음가짐은?'}
     ],
     choices:[
       {t:'고객사의 미래 요구를 선제 파악하고 수율을 끌어올려 페인포인트를 완벽히 해소한다!', v:4},
@@ -582,21 +602,42 @@ var state = {
   typeTimer:null,
   audioCtx:null,
   inEndingDialogue:false,
-  currentEndingKey:null
+  currentEndingKey:null,
+  isProcessingChoice:false
 };
 
-/* ===================== DOM ===================== */
-var $ = function(id){ return document.getElementById(id); };
+/* ===================== DOM SCREENS ===================== */
 var screens = {
-  title:$('screen-title'),
-  transition:$('screen-transition'),
-  game:$('screen-game'),
-  ending:$('screen-ending')
+  title: $('screen-title'),
+  transition: $('screen-transition'),
+  game: $('screen-game'),
+  ending: $('screen-ending')
 };
+
+/* ===================== UTILITY ===================== */
+function shuffleArray(arr){
+  var copy = arr.slice();
+  for(var i = copy.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = temp;
+  }
+  return copy;
+}
+
+function getFeedbackInfo(v){
+  if(v === 4) return { tag:'★ SUPEX/VWBE 패기 (+4)', cls:'selected-correct' };
+  if(v === 3) return { tag:'✓ 성실한 규범 준수 (+3)', cls:'selected-good' };
+  if(v === 2) return { tag:'△ 수동적 대처 (+2)', cls:'selected-normal' };
+  if(v === 1) return { tag:'✕ 소극적 태도 (+1)', cls:'selected-bad' };
+  return { tag:'', cls:'' };
+}
 
 function showScreen(name){
+  if(!screens || !screens[name]) return;
   Object.keys(screens).forEach(function(k){
-    screens[k].classList.toggle('active', k===name);
+    if(screens[k]) screens[k].classList.toggle('active', k===name);
   });
   if(name === 'title'){
     playOpeningBgm();
@@ -606,36 +647,97 @@ function showScreen(name){
 }
 
 function withName(str){
-  return str.split('{name}').join(state.playerName);
+  return (str || '').split('{name}').join(state.playerName || '플레이어');
 }
 
-/* ===================== AUDIO (WebAudio) ===================== */
+/* ===================== AUDIO (BGM & WebAudio) ===================== */
 function ensureAudio(){
   if(!state.audioCtx){
     try{
       var AC = window.AudioContext || window.webkitAudioContext;
-      state.audioCtx = new AC();
+      if(AC){
+        state.audioCtx = new AC();
+      }
     }catch(e){ state.audioCtx = null; }
   }
   if(state.audioCtx && state.audioCtx.state === 'suspended'){
-    state.audioCtx.resume();
+    state.audioCtx.resume().catch(function(){});
   }
 }
-function beep(freq, dur, type, delay, vol){
-  if(!state.audioCtx) return;
-  var ctx = state.audioCtx;
-  var t0 = ctx.currentTime + (delay||0);
-  var osc = ctx.createOscillator();
-  var gain = ctx.createGain();
-  osc.type = type || 'square';
-  osc.frequency.setValueAtTime(freq, t0);
-  gain.gain.setValueAtTime(0, t0);
-  gain.gain.linearRampToValueAtTime(vol||0.06, t0+0.02);
-  gain.gain.linearRampToValueAtTime(0, t0+(dur||0.15));
-  osc.connect(gain).connect(ctx.destination);
-  osc.start(t0);
-  osc.stop(t0+(dur||0.15)+0.02);
+
+function playOpeningBgm(){
+  if(currentBgm === 'opening') return;
+  if(runningAudio){ runningAudio.pause(); runningAudio.currentTime = 0; }
+  if(openingAudio){
+    openingAudio.volume = 0.6;
+    openingAudio.muted = isMuted;
+    var p = openingAudio.play();
+    if(p !== undefined){
+      p.then(function(){ currentBgm = 'opening'; }).catch(function(){});
+    }
+  }
 }
+
+function playRunningBgm(){
+  if(currentBgm === 'running') return;
+  if(openingAudio){ openingAudio.pause(); openingAudio.currentTime = 0; }
+  if(runningAudio){
+    runningAudio.volume = 0.5;
+    runningAudio.muted = isMuted;
+    var p = runningAudio.play();
+    if(p !== undefined){
+      p.then(function(){ currentBgm = 'running'; }).catch(function(){});
+    }
+  }
+}
+
+function stopAllBgm(){
+  if(openingAudio){ openingAudio.pause(); openingAudio.currentTime = 0; }
+  if(runningAudio){ runningAudio.pause(); runningAudio.currentTime = 0; }
+  currentBgm = null;
+}
+
+function toggleSound(){
+  ensureAudio();
+  isMuted = !isMuted;
+  if(openingAudio) openingAudio.muted = isMuted;
+  if(runningAudio) runningAudio.muted = isMuted;
+  var btn = $('soundToggleBtn');
+  if(btn){
+    btn.textContent = isMuted ? '🔇' : '🔊';
+    btn.classList.toggle('muted', isMuted);
+    btn.title = isMuted ? '사운드 켜기 (단축키: M)' : '사운드 끄기 (단축키: M)';
+  }
+  if(!isMuted){
+    playClick();
+    if(screens.title && screens.title.classList.contains('active')){
+      playOpeningBgm();
+    }else{
+      playRunningBgm();
+    }
+  }
+}
+
+function beep(freq, dur, type, delay, vol){
+  if(isMuted) return;
+  ensureAudio();
+  if(!state.audioCtx) return;
+  try{
+    var ctx = state.audioCtx;
+    var t0 = ctx.currentTime + (delay||0);
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = type || 'square';
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(vol||0.06, t0+0.02);
+    gain.gain.linearRampToValueAtTime(0, t0+(dur||0.15));
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0+(dur||0.15)+0.02);
+  }catch(e){}
+}
+
 function playClick(){ beep(520,0.06,'square',0,0.04); }
 function playConfirm(){ beep(680,0.09,'square',0,0.05); beep(880,0.11,'square',0.08,0.05); }
 function playSiren(){
@@ -667,8 +769,9 @@ function playEndingFanfare(tier){
 
 /* ===================== GAUGE ===================== */
 function updateGauge(){
-  var pct = Math.min(100, (state.score/24)*100);
-  $('supexFill').style.width = pct+'%';
+  var maxBase = state.bonus ? 25 : 24;
+  var pct = Math.min(100, (state.score / maxBase) * 100);
+  $('supexFill').style.width = pct + '%';
   $('scoreNum').textContent = state.score;
   $('bonusTag').classList.toggle('hidden', !state.bonus);
 }
@@ -729,9 +832,12 @@ function triggerEffect(effect){
 
 function loadStage(stage, tagOverride){
   state.inEndingDialogue = false;
+  state.isProcessingChoice = false;
   state.currentStage = stage;
   state.lineIndex = 0;
   $('stageLabel').textContent = tagOverride || stage.tag;
+  $('warningOverlay').classList.remove('active');
+  $('newsflashBanner').classList.remove('active');
   setBackground(stage);
   $('choices').classList.add('hidden');
   $('choices').innerHTML = '';
@@ -766,7 +872,7 @@ function typeText(el, text){
       state.typing = false;
       onLineDone();
     }
-  }, 26);
+  }, 24);
 }
 
 function skipTyping(){
@@ -779,6 +885,7 @@ function skipTyping(){
     return;
   }
   var stage = state.currentStage;
+  if(!stage) return;
   var line = stage.lines[state.lineIndex];
   clearInterval(state.typeTimer);
   $('dialogueText').textContent = withName(line.text);
@@ -810,7 +917,8 @@ function onEndingLineDone(){
   box.classList.remove('hidden');
   var btn = document.createElement('button');
   btn.className = 'choice-btn';
-  btn.textContent = '▶ 결과 카드 보기';
+  btn.style.justifyContent = 'center';
+  btn.textContent = '▶ 결과 카드 보기 (Space/Enter)';
   btn.onclick = function(){
     playClick();
     showFinalEndingCard(state.currentEndingKey);
@@ -824,7 +932,8 @@ function renderContinueButton(){
   box.classList.remove('hidden');
   var btn = document.createElement('button');
   btn.className = 'choice-btn';
-  btn.textContent = '▶ 다음';
+  btn.style.justifyContent = 'center';
+  btn.textContent = '▶ 다음 (Space/Enter)';
   btn.onclick = function(){ playClick(); onContinueAfterStage(); };
   box.appendChild(btn);
 }
@@ -832,12 +941,20 @@ function renderContinueButton(){
 function renderChoices(choices){
   var box = $('choices');
   box.innerHTML = '';
+  // 4지선다는 매번 랜덤 셔플하여 특정 번호 몰림 방지, 2지선다(스페셜)는 원본 순서 유지
+  var displayChoices = (choices.length > 2) ? shuffleArray(choices) : choices;
   var letters = ['A','B','C','D'];
-  choices.forEach(function(c, idx){
+  
+  displayChoices.forEach(function(c, idx){
     var btn = document.createElement('button');
     btn.className = 'choice-btn';
-    btn.innerHTML = '<span class="choice-letter">'+letters[idx]+'.</span>'+withName(c.t);
-    btn.onclick = function(){ selectChoice(c, box); };
+    btn.setAttribute('data-choice-idx', idx);
+    
+    var leftSpan = document.createElement('span');
+    leftSpan.innerHTML = '<span class="choice-letter">' + letters[idx] + ' [' + (idx+1) + ']</span> ' + withName(c.t);
+    btn.appendChild(leftSpan);
+    
+    btn.onclick = function(){ selectChoice(c, box, btn); };
     box.appendChild(btn);
   });
   box.classList.remove('hidden');
@@ -850,8 +967,9 @@ $('dialogueBox').addEventListener('click', function(e){
     skipTyping();
     return;
   }
-  if(state.inEndingDialogue) return;
+  if(state.inEndingDialogue || state.isProcessingChoice) return;
   var stage = state.currentStage;
+  if(!stage) return;
   var isLast = state.lineIndex >= stage.lines.length - 1;
   if(!isLast){
     state.lineIndex++;
@@ -860,20 +978,37 @@ $('dialogueBox').addEventListener('click', function(e){
 });
 
 /* ===================== FLOW CONTROL ===================== */
-function selectChoice(choice, box){
+function selectChoice(choice, box, clickedBtn){
+  if(state.isProcessingChoice) return;
+  state.isProcessingChoice = true;
+  
   Array.prototype.forEach.call(box.querySelectorAll('.choice-btn'), function(b){ b.disabled = true; });
-  playConfirm();
+  
   if(typeof choice.v === 'number'){
+    var fb = getFeedbackInfo(choice.v);
+    if(clickedBtn && fb.cls){
+      clickedBtn.classList.add(fb.cls);
+      var badge = document.createElement('span');
+      badge.className = 'choice-badge';
+      badge.textContent = fb.tag;
+      clickedBtn.appendChild(badge);
+    }
     state.score += choice.v;
     updateGauge();
+  }else if(clickedBtn){
+    clickedBtn.classList.add('selected-good');
   }
+  
+  playConfirm();
+
+  // 교육적 피드백 확인을 위한 딜레이 후 다음 진행
   setTimeout(function(){
     if(choice.next){
       routeByKey(choice.next);
     }else{
       onContinueAfterStage();
     }
-  }, 450);
+  }, 750);
 }
 
 function onContinueAfterStage(){
@@ -882,10 +1017,15 @@ function onContinueAfterStage(){
     state.bonus = true;
     state.score += 1;
     updateGauge();
-    goEnding('ending4');
+    // 25점 만점(24점+비브라늄1점)만 사장 엔딩, 그 외(21~24점)는 핵심 임원 엔딩
+    if(state.score >= 25){
+      goEnding('ending4');
+    }else{
+      goEnding('ending3');
+    }
     return;
   }
-  if(stage.transitionAfter){
+  if(stage && stage.transitionAfter){
     runTransition(stage.transitionAfter, advanceMainStage);
   }else{
     advanceMainStage();
@@ -917,11 +1057,17 @@ function runTransition(text, cb){
 
 function resolveMainEnding(){
   var s = state.score;
-  if(s >= 21 && s <= 24){
+  if(s >= 24){
+    // 1~6장 모든 문항에서 만점(4점 * 6 = 24점)을 획득해야만 스페셜 챕터(인등산)로 진입
     loadStage(SPECIAL_1, SPECIAL_1.tag);
+  }else if(s >= 21){
+    // 21~23점은 훌륭한 성과이나 만점이 아니므로 스페셜 챕터 없이 RANK A(핵심 임원) 엔딩
+    goEnding('ending3');
   }else if(s >= 11){
+    // 11~20점: RANK C(평범한 구성원)
     goEnding('ending2');
   }else{
+    // 1~10점: RANK D(우울한 만년 사원)
     goEnding('ending1');
   }
 }
@@ -970,7 +1116,7 @@ function showFinalEndingCard(key){
   $('endingTitle').textContent = e.title;
   $('endingName').textContent = '사원증 명의: ' + state.playerName;
   var maxShow = state.bonus ? 25 : 24;
-  $('endingScore').textContent = state.score + ' / ' + maxShow + '  (SUPEX 지수)';
+  $('endingScore').textContent = state.score + ' / ' + maxShow + '  (CoC 실천도)';
   $('endingDesc').textContent = withName(e.desc);
   screens.ending.className = 'screen active ' + e.bg;
   playEndingFanfare(tier);
@@ -993,6 +1139,7 @@ function startGame(){
   state.bonus = false;
   state.stageIndex = 0;
   state.inEndingDialogue = false;
+  state.isProcessingChoice = false;
   ensureAudio();
   updateGauge();
   showScreen('game');
@@ -1003,7 +1150,28 @@ function restartGame(){
   showScreen('title');
   $('warningOverlay').classList.remove('active');
   $('newsflashBanner').classList.remove('active');
+  $('blackOverlay').classList.remove('blink');
+  $('sceneBgImg').className = 'scene-img';
+  $('sceneBgImg').style.display = 'none';
+  $('sceneOverlayImg').className = 'scene-overlay-img';
+  $('sceneOverlayImg').style.display = 'none';
 }
+
+/* ===================== KEYBOARD & EVENT LISTENERS ===================== */
+function initAudioOnUserAction(){
+  ensureAudio();
+  if(screens && screens.title && screens.title.classList.contains('active') && currentBgm !== 'opening'){
+    playOpeningBgm();
+  }
+}
+
+document.addEventListener('click', initAudioOnUserAction, {once:false});
+document.addEventListener('keydown', initAudioOnUserAction, {once:false});
+
+$('soundToggleBtn').addEventListener('click', function(e){
+  e.stopPropagation();
+  toggleSound();
+});
 
 $('startBtn').addEventListener('click', function(){ playClick(); startGame(); });
 $('playerNameInput').addEventListener('keydown', function(e){
@@ -1011,6 +1179,50 @@ $('playerNameInput').addEventListener('keydown', function(e){
 });
 $('restartBtn').addEventListener('click', function(){ playClick(); restartGame(); });
 
+document.addEventListener('keydown', function(e){
+  // 이름 입력 중일 때는 전역 단축키 무시
+  if(document.activeElement === $('playerNameInput')) return;
+
+  var key = e.key.toLowerCase();
+
+  // 음소거 토글 단축키 'M'
+  if(key === 'm'){
+    toggleSound();
+    return;
+  }
+
+  // 게임 화면 진행 단축키
+  if(screens && screens.game && screens.game.classList.contains('active')){
+    // Space 또는 Enter로 대사 스킵 / 넘기기 / 단일 버튼 확인
+    if(e.key === ' ' || e.key === 'Enter'){
+      e.preventDefault();
+      if(state.typing){
+        skipTyping();
+      }else if(!$('choices').classList.contains('hidden')){
+        var btns = $('choices').querySelectorAll('.choice-btn');
+        if(btns.length === 1 && !btns[0].disabled){
+          btns[0].click();
+        }
+      }else if(state.currentStage && state.lineIndex < state.currentStage.lines.length - 1){
+        state.lineIndex++;
+        playLine();
+      }
+      return;
+    }
+
+    // 1~4번 키 또는 A~D 키로 4지선다 선택
+    var choiceBtns = $('choices').querySelectorAll('.choice-btn');
+    if(!$('choices').classList.contains('hidden') && choiceBtns.length > 1 && !state.isProcessingChoice){
+      var map = { '1':0, '2':1, '3':2, '4':3, 'a':0, 'b':1, 'c':2, 'd':3 };
+      if(map[key] !== undefined && choiceBtns[map[key]] && !choiceBtns[map[key]].disabled){
+        e.preventDefault();
+        choiceBtns[map[key]].click();
+      }
+    }
+  }
+});
+
+// 초기화 실행
 updateGauge();
 showScreen('title');
 })();
